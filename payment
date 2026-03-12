@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Upload Foto Publik</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f7f6; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .container { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
+        h2 { color: #333; margin-bottom: 10px; }
+        .upload-area { border: 2px dashed #ddd; padding: 20px; border-radius: 10px; margin: 20px 0; cursor: pointer; transition: 0.3s; }
+        .upload-area:hover { border-color: #007bff; background: #f0f7ff; }
+        input[type="file"] { display: none; }
+        button { background: #007bff; color: white; border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        #preview { width: 100%; border-radius: 8px; margin-top: 15px; display: none; }
+        #result { margin-top: 20px; padding: 15px; background: #e9ecef; border-radius: 8px; display: none; word-break: break-all; }
+        .loading { display: none; color: #666; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Upload Foto</h2>
+    <p style="font-size: 14px; color: #666;">Foto akan tersedia secara publik di internet.</p>
+
+    <label for="imageInput" class="upload-area" id="dropZone">
+        <span id="labelTxt">Klik untuk pilih foto</span>
+        <img id="preview" src="" alt="Preview">
+    </label>
+    
+    <input type="file" id="imageInput" accept="image/*">
+    
+    <button id="uploadBtn" onclick="uploadKeImgur()">Upload ke Publik</button>
+    
+    <div class="loading" id="loader">Sedang mengupload... mohon tunggu.</div>
+
+    <div id="result">
+        <strong>Berhasil! Link Foto:</strong><br>
+        <a id="linkFoto" href="#" target="_blank" style="color: #007bff;"></a>
+    </div>
+</div>
+
+<script>
+    const input = document.getElementById('imageInput');
+    const preview = document.getElementById('preview');
+    const labelTxt = document.getElementById('labelTxt');
+    const resultDiv = document.getElementById('result');
+    const linkFoto = document.getElementById('linkFoto');
+    const loader = document.getElementById('loader');
+    const uploadBtn = document.getElementById('uploadBtn');
+
+    // Menampilkan preview saat file dipilih
+    input.onchange = evt => {
+        const [file] = input.files;
+        if (file) {
+            preview.src = URL.createObjectURL(file);
+            preview.style.display = 'block';
+            labelTxt.style.display = 'none';
+        }
+    }
+
+    async function uploadKeImgur() {
+        const file = input.files[0];
+        if (!file) {
+            alert("Pilih foto dulu ya!");
+            return;
+        }
+
+        // Reset tampilan
+        uploadBtn.disabled = true;
+        loader.style.display = 'block';
+        resultDiv.style.display = 'none';
+
+        const formData = new FormData();
+        formData.append('image', file);
+
+        try {
+            // Menggunakan Client ID anonymous Imgur
+            const response = await fetch('https://api.imgur.com/3/image', {
+                method: 'POST',
+                headers: {
+                    Authorization: 'Client-ID 546c219559c4696' // Ini adalah ID demo
+                },
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                linkFoto.href = data.data.link;
+                linkFoto.innerText = data.data.link;
+                resultDiv.style.display = 'block';
+            } else {
+                alert("Upload gagal: " + data.data.error);
+            }
+        } catch (error) {
+            alert("Terjadi kesalahan jaringan.");
+            console.error(error);
+        } finally {
+            loader.style.display = 'none';
+            uploadBtn.disabled = false;
+        }
+    }
+</script>
+
+</body>
+</html>
